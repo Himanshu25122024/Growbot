@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GrowBot - Gardening Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Common Styles */
+        :root {
+            --primary-color: #28a745;
+            --primary-hover: #218838;
+            --text-color: white;
+            --shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            color: var(--text-color);
+            position: relative;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+        
+        .background-slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+        
+        .slide.active {
+            opacity: 1;
+        }
+        
+        /* Navigation */
+        nav {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 40px;
+            font-size: 20px;
+            z-index: 10;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 10px 30px;
+            border-radius: 50px;
+            backdrop-filter: blur(5px);
+        }
+        
+        nav a {
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 600;
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.7);
+            font-size: 22px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        nav a:hover {
+            transform: scale(1.1);
+            color: #a8ffb9;
+        }
+        
+        nav a i {
+            font-size: 20px;
+        }
+        
+        /* Main Content Container */
+        .page {
+            height: 100vh;
+            width: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        /* Landing Page */
+        .landing-page {
+            display: flex;
+        }
+        
+        .content {
+            background-color: rgba(0, 0, 0, 0.4);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: var(--shadow);
+            animation: fadeInUp 0.8s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .avatar-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .avatar {
+            width: 140px;
+            height: 140px;
+            background-image: url('https://i.pinimg.com/736x/38/f3/b1/38f3b128de4f84fefd4657fe8079667a.jpg');
+            background-size: cover;
+            background-position: center;
+            border-radius: 50%;
+            box-shadow: var(--shadow);
+            border: 4px solid white;
+            animation: floatAnimation 3s ease-in-out infinite;
+            transition: all 0.3s ease;
+        }
+        
+        .avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+        }
+        
+        @keyframes floatAnimation {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+            100% { transform: translateY(0); }
+        }
+        
+        .title {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            text-shadow: 5px 5px 15px rgba(0, 0, 0, 0.7);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #ffffff, #c8f6d0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .subtitle {
+            font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+            margin: 20px 0;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+            font-weight: 300;
+        }
+        
+        .btn {
+            margin-top: 20px;
+            padding: 16px 32px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: white;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: scale(1.05);
+            box-shadow: 0 7px 25px rgba(0, 0, 0, 0.7);
+        }
+        
+        /* Auth Pages */
+        .auth-container {
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .auth-avatar {
+            width: 100px;
+            height: 100px;
+            background-image: url('https://i.pinimg.com/736x/38/f3/b1/38f3b128de4f84fefd4657fe8079667a.jpg');
+            background-size: cover;
+            background-position: center;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            border: 3px solid white;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+        
+        .auth-avatar:hover {
+            transform: scale(1.05);
+        }
+        
+        .auth-title {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+            font-weight: 700;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            font-size: 1rem;
+            background-color: rgba(255, 255, 255, 0.95);
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3);
+        }
+        
+        .auth-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .auth-btn:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+        
+        .switch-auth {
+            margin-top: 20px;
+            font-size: 1rem;
+        }
+        
+        .switch-auth a {
+            color: #a8ffb9;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        
+        .switch-auth a:hover {
+            text-decoration: underline;
+        }
+        
+        .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+        }
+        
+        .back-btn:hover {
+            color: #a8ffb9;
+            transform: translateX(-3px);
+        }
+        
+        /* Password strength indicator */
+        .password-strength {
+            height: 6px;
+            background: #ddd;
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        
+        .strength-meter {
+            height: 100%;
+            width: 0;
+            transition: all 0.3s ease;
+        }
+        
+        /* Terms checkbox */
+        .terms-group {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            font-size: 0.9rem;
+        }
+        
+        .terms-group input {
+            width: auto;
+            margin-right: 10px;
+            accent-color: var(--primary-color);
+        }
+        
+        .terms-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+        
+        /* Error messages */
+        .error-message {
+            color: #ff6b6b;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        /* About Us Page */
+        .about-container {
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .about-title {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+            font-weight: 700;
+            color: #a8ffb9;
+        }
+        
+        .about-content {
+            text-align: left;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .team-members {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .team-member {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            width: 220px;
+            transition: all 0.3s ease;
+        }
+        
+        .team-member:hover {
+            transform: translateY(-5px);
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+        
+        .member-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            border: 3px solid var(--primary-color);
+            object-fit: cover;
+        }
+        
+        .member-name {
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        
+        .member-role {
+            color: #a8ffb9;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .member-bio {
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .social-links a {
+            color: white;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            color: var(--primary-color);
+            transform: scale(1.2);
+        }
+        
+        @media (max-width: 768px) {
+    .mission-statement {
+        padding: 15px;
+        font-size: 0.95rem; /* Slightly reduce font size on smaller screens */
+        margin: 20px 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .mission-statement {
+        padding: 12px;
+        font-size: 0.9rem; /* Further reduce font size on very small screens */
+    }
+}
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            nav {
+                gap: 20px;
+                padding: 8px 20px;
+            }
+            
+            nav a {
+                font-size: 18px;
+            }
+            
+            .content, .auth-container, .about-container {
+                padding: 30px 20px;
+                width: 95%;
+            }
+            
+            .auth-title, .about-title {
+                font-size: 1.8rem;
+                margin-bottom: 20px;
+            }
+            
+            .team-members {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .team-member {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            nav {
+                gap: 15px;
+                font-size: 16px;
+            }
+            
+            nav a {
+                font-size: 16px;
+            }
+            
+            nav a i {
+                display: none;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+            
+            .subtitle {
+                font-size: 1.2rem;
+            }
+            
+            .btn {
+                padding: 14px 24px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Slider -->
+    <div class="background-slider">
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?ixlib=rb-1.2.1&auto=format&fit=crop&w=1489&q=80');"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1516253593875-bd7ba052fbc5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80');"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80');"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1534710961216-75c88202f43d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80');"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1526397751294-331021109fbd?ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80');"></div>
+    </div>
+    
+    <!-- Navigation -->
+    <nav>
+        <a href="#" onclick="showLandingPage()"><i class="fas fa-home"></i> Home</a>
+        <a href="#" onclick="showAboutPage()"><i class="fas fa-info-circle"></i> About</a>
+        <a href="#" onclick="showLoginPage()"><i class="fas fa-sign-in-alt"></i> Login</a>
+    </nav>
+    
+    <!-- Landing Page -->
+    <div class="page landing-page" id="landingPage">
+        <div class="content">
+            <div class="avatar-container">
+                <div class="avatar"></div>
+            </div>
+            <h1 class="title">WELCOME TO GROWBOT</h1>
+            <p class="subtitle">Your Friendly Gardening Assistant</p>
+            <button class="btn" onclick="redirectToChatbot()">
+                <i class="fas fa-robot"></i> Get Started
+            </button>
+        </div>
+    </div>
+    
+    <!-- Login Page -->
+    <div class="page auth-page" id="loginPage">
+        <div class="auth-container">
+            <div class="auth-avatar"></div>
+            <h2 class="auth-title">Login to GrowBot</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="login-username">Username or Email</label>
+                    <input type="text" id="login-username" placeholder="Enter your username or email" required>
+                    <div class="error-message" id="login-username-error"></div>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" placeholder="Enter your password" required>
+                    <div class="error-message" id="login-password-error"></div>
+                </div>
+                <button type="submit" class="auth-btn">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+                <div class="switch-auth">
+                    Don't have an account? <a href="#" onclick="showSignupPage()">Sign up</a>
+                </div>
+            </form>
+            <button class="back-btn" onclick="showLandingPage()">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </button>
+        </div>
+    </div>
+    
+    <!-- Signup Page -->
+    <div class="page auth-page" id="signupPage">
+        <div class="auth-container">
+            <div class="auth-avatar"></div>
+            <h2 class="auth-title">Create Account</h2>
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="signup-username">Username</label>
+                    <input type="text" id="signup-username" placeholder="Choose a username" required>
+                    <div class="error-message" id="signup-username-error"></div>
+                </div>
+                <div class="form-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" placeholder="Enter your email" required>
+                    <div class="error-message" id="signup-email-error"></div>
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" placeholder="Create a password" required oninput="checkPasswordStrength()">
+                    <div class="password-strength">
+                        <div class="strength-meter" id="strengthMeter"></div>
+                    </div>
+                    <div class="error-message" id="signup-password-error"></div>
+                </div>
+                <div class="form-group">
+                    <label for="signup-confirm-password">Confirm Password</label>
+                    <input type="password" id="signup-confirm-password" placeholder="Confirm your password" required>
+                    <div class="error-message" id="signup-confirm-error"></div>
+                </div>
+                <div class="terms-group">
+                    <input type="checkbox" id="terms" required>
+                    <label for="terms">I agree to the <a href="#" style="color: #a8ffb9;">Terms of Service</a> and <a href="#" style="color: #a8ffb9;">Privacy Policy</a></label>
+                </div>
+                <button type="submit" class="auth-btn">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </button>
+                <div class="switch-auth">
+                    Already have an account? <a href="#" onclick="showLoginPage()">Login</a>
+                </div>
+            </form>
+            <button class="back-btn" onclick="showLandingPage()">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </button>
+        </div>
+    </div>
+    
+    <!-- About Us Page -->
+    <!-- About Us Page -->
+<div class="page" id="aboutPage">
+    <div class="about-container">
+        <h2 class="about-title">About GrowBot</h2>
+        
+        <div class="about-content">
+            <p>GrowBot is an AI-powered gardening assistant developed as a collaborative project by our dedicated team. Born from our shared passion for both technology and nature, this project combines machine learning with practical gardening knowledge to help plant enthusiasts of all levels.</p>
+            
+            <div class="mission-statement">
+                "Bridging the gap between technology and nature through intelligent plant care assistance."
+            </div>
+            
+            <h3>Our Project Journey</h3>
+            <p>What began as an academic project evolved into a comprehensive AI solution through months of teamwork, research, and iterative development. We combined our diverse skills in AI programming, bot development, and user experience design to create GrowBot - a smart assistant that learns about your plants and provides personalized care recommendations.</p>
+            
+            <h3>Meet Our Team</h3>
+            <div class="team-members">
+                <div class="team-member">
+                    <img src="passport.jpg" alt="Himanshu Choudhary" class="member-avatar">
+                    <div class="member-name">Himanshu Choudhary</div>
+                    <div class="member-role">AI Developer & Project Lead</div>
+                    <div class="member-bio">Spearheaded the machine learning integration and chatbot logic development</div>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        <a href="#"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+                
+                <div class="team-member">
+                    <img src="WhatsApp Image 2025-04-04 at 10.30.36 AM.jpeg" alt="Radhika Vashistha" class="member-avatar">
+                    <div class="member-name">Radhika Vashistha</div>
+                    <div class="member-role">Frontend Developer</div>
+                    <div class="member-bio">Designed and implemented the user interface and interactive features</div>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-github"></i></a>
+                        <a href="#"><i class="fab fa-codepen"></i></a>
+                    </div>
+                </div>
+                
+                <div class="team-member">
+                    <img src="WhatsApp Image 2025-04-05 at 4.31.13 PM.jpeg" alt="Yash Raj" class="member-avatar">
+                    <div class="member-name">Yash Raj</div>
+                    <div class="member-role">Backend Developer</div>
+                    <div class="member-bio">Built the server infrastructure and database integration</div>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <h3>Our Technology Stack</h3>
+            <p>GrowBot leverages cutting-edge technologies including natural language processing for understanding user queries, machine learning algorithms for personalized recommendations, and a responsive web interface for seamless user experience. The system continuously learns from user interactions to improve its advice over time.</p>
+            
+            <h3>Collaborative Development</h3>
+            <p>This project was developed through close teamwork, with regular code reviews, pair programming sessions, and collaborative problem-solving. We utilized agile methodologies to iteratively improve the system based on user feedback and testing results.</p>
+        </div>
+        
+        <button class="back-btn" onclick="showLandingPage()">
+            <i class="fas fa-arrow-left"></i> Back to Home
+        </button>
+    </div>
+</div>
+    
+    <script>
+        // Background slider functionality
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        
+        function showSlide(n) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            currentSlide = (n + slides.length) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }
+        
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+        
+        // Start with first slide
+        showSlide(0);
+        
+        // Auto-advance slides every 5 seconds
+        setInterval(nextSlide, 5000);
+        
+        // Page navigation functions
+        function showLandingPage() {
+            hideAllPages();
+            document.getElementById('landingPage').style.display = 'flex';
+        }
+        
+        function showLoginPage() {
+            hideAllPages();
+            document.getElementById('loginPage').style.display = 'flex';
+            clearErrors('loginForm');
+        }
+        
+        function showSignupPage() {
+            hideAllPages();
+            document.getElementById('signupPage').style.display = 'flex';
+            clearErrors('signupForm');
+        }
+        
+        function showAboutPage() {
+            hideAllPages();
+            document.getElementById('aboutPage').style.display = 'flex';
+        }
+        
+        function hideAllPages() {
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => {
+                page.style.display = 'none';
+            });
+        }
+        
+        function redirectToChatbot() {
+            window.location.href = 'g1.html';
+        }
+        
+        // Password strength checker
+        function checkPasswordStrength() {
+            const password = document.getElementById('signup-password').value;
+            const meter = document.getElementById('strengthMeter');
+            let strength = 0;
+            
+            // Length check
+            if (password.length > 7) strength += 1;
+            // Lowercase check
+            if (password.match(/[a-z]/)) strength += 1;
+            // Uppercase check
+            if (password.match(/[A-Z]/)) strength += 1;
+            // Number check
+            if (password.match(/[0-9]/)) strength += 1;
+            // Special char check
+            if (password.match(/[^a-zA-Z0-9]/)) strength += 1;
+            
+            // Update meter
+            const width = strength * 20;
+            meter.style.width = width + '%';
+            
+            // Update color
+            if (strength <= 2) {
+                meter.style.backgroundColor = '#ff6b6b'; // red
+            } else if (strength <= 4) {
+                meter.style.backgroundColor = '#ffd166'; // yellow
+            } else {
+                meter.style.backgroundColor = '#06d6a0'; // green
+            }
+        }
+        
+        // Clear error messages
+        function clearErrors(formId) {
+            const form = document.getElementById(formId);
+            const errorMessages = form.querySelectorAll('.error-message');
+            errorMessages.forEach(error => {
+                error.style.display = 'none';
+                error.textContent = '';
+            });
+        }
+        
+        // Show error message
+        function showError(fieldId, message) {
+            const errorElement = document.getElementById(fieldId + '-error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        // Form validations
+        function validateLoginForm() {
+            let isValid = true;
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+            
+            clearErrors('loginForm');
+            
+            if (username === '') {
+                showError('login-username', 'Username or email is required');
+                isValid = false;
+            }
+            
+            if (password === '') {
+                showError('login-password', 'Password is required');
+                isValid = false;
+            } else if (password.length < 6) {
+                showError('login-password', 'Password must be at least 6 characters');
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+        
+        function validateSignupForm() {
+            let isValid = true;
+            const username = document.getElementById('signup-username').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;
+            const termsChecked = document.getElementById('terms').checked;
+            
+            clearErrors('signupForm');
+            
+            // Username validation
+            if (username === '') {
+                showError('signup-username', 'Username is required');
+                isValid = false;
+            } else if (username.length < 4) {
+                showError('signup-username', 'Username must be at least 4 characters');
+                isValid = false;
+            }
+            
+            // Email validation
+            if (email === '') {
+                showError('signup-email', 'Email is required');
+                isValid = false;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showError('signup-email', 'Please enter a valid email');
+                isValid = false;
+            }
+            
+            // Password validation
+            if (password === '') {
+                showError('signup-password', 'Password is required');
+                isValid = false;
+            } else if (password.length < 8) {
+                showError('signup-password', 'Password must be at least 8 characters');
+                isValid = false;
+            }
+            
+            // Confirm password validation
+            if (confirmPassword !== password) {
+                showError('signup-confirm', 'Passwords do not match');
+                isValid = false;
+            }
+            
+            // Terms validation
+            if (!termsChecked) {
+                alert('You must accept the Terms of Service');
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+        
+        // Form submissions
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (validateLoginForm()) {
+                const username = document.getElementById('login-username').value;
+                const password = document.getElementById('login-password').value;
+                
+                // Here you would typically validate the credentials with your backend
+                console.log('Login attempted with:', { username, password });
+                
+                // For demo purposes, just show an alert
+                alert('Login successful! Redirecting to chatbot...');
+                redirectToChatbot();
+            }
+        });
+        
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (validateSignupForm()) {
+                const username = document.getElementById('signup-username').value;
+                const email = document.getElementById('signup-email').value;
+                const password = document.getElementById('signup-password').value;
+                
+                // Here you would typically send the data to your server
+                console.log('Signup data:', { username, email, password });
+                
+                // For demo purposes, just show an alert
+                alert('Account created successfully! You can now login.');
+                showLoginPage();
+                
+                // Clear the form
+                document.getElementById('signupForm').reset();
+                document.getElementById('strengthMeter').style.width = '0%';
+            }
+        });
+        
+        // Show landing page by default
+        showLandingPage();
+        
+        // Add animation to buttons on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.btn, .auth-btn');
+            buttons.forEach(button => {
+                button.style.transform = 'translateY(20px)';
+                button.style.opacity = '0';
+                setTimeout(() => {
+                    button.style.transition = 'all 0.4s ease-out';
+                    button.style.transform = 'translateY(0)';
+                    button.style.opacity = '1';
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>
